@@ -14,12 +14,13 @@
 @code {
     [Parameter] public int CurrentPage { get; set; } = 1;
     [Parameter] public int TotalPages { get; set; }
-    [Parameter] public int Radio { get; set; } = 5;
+    [Parameter] public int Radio { get; set; } = 1;
     [Parameter] public EventCallback<int> SelectedPage { get; set; }
     List<PageModel> Links = new();
 
     protected override void OnParametersSet()
     {
+        int count = 1;
         Links = new List<PageModel>();
 
         var previousLinkEnable = CurrentPage != 1;
@@ -31,29 +32,61 @@
                 Enable = previousLinkEnable
             });
 
+
         for (int i = 1; i <= TotalPages; i++)
         {
-            if (i >= CurrentPage - Radio && i <= CurrentPage + Radio)
+            if ( count <= 10) 
             {
-                Links.Add(new PageModel
+                if (CurrentPage > 10)
+                {
+                    if (i > (CurrentPage - 10))
                     {
-                        Page = i,
-                        Enable = CurrentPage == i,
-                        Text = $"{i}"
-                    });
-                //if (CurrentPage == TotalPages )
-                
+                        Links.Add(new PageModel
+                            {
+                                Page = i,
+                                Enable = CurrentPage == i,
+                                Text = $"{i}"
+                            });
+
+                         count = count + 1;
+                    }
+                }
+                else
+                {
+                    Links.Add(new PageModel
+                        {
+                            Page = i,
+                            Enable = CurrentPage == i,
+                            Text = $"{i}"
+                        });
+
+                        count = count + 1;
+                }
             }
         }
 
-        var linkNextEnable = CurrentPage != TotalPages;
         var linkNextPage = CurrentPage + 1;
-        Links.Add(new PageModel
-            {
-                Text = "Siguiente",
-                Page = linkNextPage,
-                Enable = linkNextEnable
-            });
+        var linkNextEnable = CurrentPage != TotalPages;
+        if (CurrentPage == TotalPages)
+        {
+            linkNextPage = CurrentPage;
+
+            Links.Add(new PageModel
+                {
+                    Text = "Siguiente",
+                    Page = linkNextPage,
+                    Enable = linkNextEnable
+                });
+        }
+        else
+        {
+            Links.Add(new PageModel
+                {
+                    Text = "Siguiente",
+                    Page = linkNextPage,
+                    Enable = linkNextEnable
+                });
+        }
 
     }
 
