@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Sales.API.Data;
+using Sales.API.Helpers;
+using Sales.Shared.DTOs;
 using Sales.Shared.Entities;
 
 namespace Sales.API.Controllers
@@ -16,17 +18,46 @@ namespace Sales.API.Controllers
             _context = context;
         }
 
-        [HttpGet] 
-        public async Task<ActionResult> GetAsync()
+        [HttpGet]
+        public async Task<IActionResult> GetAsync([FromQuery] PaginationDTO pagination)
         {
-            return Ok(await _context.Categories.ToListAsync());
+            var queryable = _context.Categories.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(pagination.Filter))
+            {
+                queryable = queryable.Where(x => x.Name.ToLower().Contains(pagination.Filter.ToLower()));
+            }
+
+
+            return Ok(await queryable
+                .OrderBy(x => x.Name)
+                .Paginate(pagination)
+                .ToListAsync());
         }
 
-        [HttpGet ("{id:int}")] 
-        public async Task<ActionResult> GetAsync( int id)
+        [HttpGet("totalPages")]
+        public async Task<ActionResult> GetPages([FromQuery] PaginationDTO pagination)
+        {
+            var queryable = _context.Categories.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(pagination.Filter))
+            {
+                queryable = queryable.Where(x => x.Name.ToLower().Contains(pagination.Filter.ToLower()));
+            }
+
+
+            double count = await queryable.CountAsync();
+            double totalPages = Math.Ceiling(count / pagination.RecordsNumber);
+            return Ok(totalPages);
+        }
+
+
+
+        [HttpGet("{id:int}")]
+        public async Task<ActionResult> GetAsync(int id)
         {
             var category = await _context.Categories.FirstOrDefaultAsync(x => x.Id == id);
-            if (category == null)
+            if (category is null)
             {
                 return NotFound();
             }
@@ -36,16 +67,16 @@ namespace Sales.API.Controllers
 
 
         [HttpPost] //method for create o add
-        public async Task<ActionResult> PostAsync(Category category) 
+        public async Task<ActionResult> PostAsync(Category category)
 
-            {
+        {
             try
             {
-                _context.Categories.Add(category); //  _context.Add(category);
+                _context.Add(category); //  _context.Add(category);
                 await _context.SaveChangesAsync();
                 return Ok(category);
             }
-            catch (DbUpdateException dbUpdateException) 
+            catch (DbUpdateException dbUpdateException)
             {
                 if (dbUpdateException.InnerException!.Message.Contains("duplicate"))
                 {
@@ -58,8 +89,8 @@ namespace Sales.API.Controllers
             {
                 return BadRequest(exception.Message);
             }
-            
-            }
+
+        }
 
         [HttpPut] // method for edit
         public async Task<ActionResult> PutAsync(Category category)
@@ -98,7 +129,7 @@ namespace Sales.API.Controllers
             _context.Categories.Remove(category);
             await _context.SaveChangesAsync();
             return NoContent();
-            
+
         }
 
     }
