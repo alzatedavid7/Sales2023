@@ -17,17 +17,17 @@
         if (responseHttp.Error)
         {
             var message = await responseHttp.GetErrorMessage();
-            await sweetAlertService.FireAsync("Error", message);
+            await sweetAlertService.FireAsync("Error", message, SweetAlertIcon.Error);
             return;
         }
 
-        categoryForm!.FormPostedSuccessfully = true;
-        navigationManager.NavigateTo("/categories");
+        Return();
     }
 
 
     private void Return()
     {
+        categoryForm!.FormPostedSuccessfully = true;
         navigationManager.NavigateTo("/categories");
     }
 }
